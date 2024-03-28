@@ -12,6 +12,7 @@
       referrerpolicy="no-referrer"
     />
   </head>
+
   <body>
     <div class="con">
       <div class="titleMain">
@@ -24,74 +25,91 @@
         <h1 class="lastTitle">to do</h1>
       </div>
       <div class="main">
-        <div class="taskCon" id="showTask"></div>
+        <div class="taskCon" id="showTask">
+          <!-- <div class="task">Write smooth<i class="cross fa-solid fa-xmark"></i></div> -->
+          <!-- <hr>  -->
+        </div>
       </div>
       <input type="text" id="input" placeholder="Write your task here" />
-      <button class="btn" id="addTask">add new task</button>
-      <button class="btn" id="clearTasks">clear tasks</button>
+      <div class="btns">
+        <button class="btn" id="clearTasks">clear tasks</button>
+        <button class="btn" id="addTask">add task</button>
+      </div>
     </div>
   </body>
   <script>
-    let addTask = document.getElementById("addTask");
-    let clearTasks = document.getElementById("clearTasks");
-    let showTask = document.getElementById("showTask");
-    let input = document.getElementById("input");
-    let count = 0;
+    let tasksArray = JSON.parse(localStorage.getItem("tasks")) || [];
+    let addBtn = document.querySelector("#addTask");
+    let clearBtn = document.querySelector("#clearTasks");
+    let input = document.querySelector("input");
+    let taskCon = document.querySelector("#showTask");
 
-    let taskPara;
-    let line;
-    const addTaskFunc = () => {
-      taskPara = document.createElement("p");
-      line = document.createElement("hr");
-      taskPara.innerHTML = input.value;
-      showTask.appendChild(taskPara);
-      showTask.appendChild(line);
-      input.value = "";
-      localStorage.setItem(count, taskPara.innerHTML);
-      count++;
-    };
-
-    const retrieveFromLocalStorageFunc = () => {
-      for (let i = 0; i < localStorage.length; i++) {
-        let key = localStorage.key(i);
-        taskPara = document.createElement("p");
-        line = document.createElement("hr");
-        taskPara.innerHTML = localStorage.getItem(key);
-        showTask.appendChild(taskPara);
-        showTask.appendChild(line);
-        console.log(key);
-        console.log(taskPara.innerHTML);
-      }
-    };
-
-    clearTasks.addEventListener("click", () => {
-      while (showTask.firstChild) {
-        showTask.removeChild(showTask.firstChild);
-      }
-      localStorage.clear();
-    });
-
-    window.addEventListener("DOMContentLoaded", () => {
-      retrieveFromLocalStorageFunc();
-    });
-
-    addTask.addEventListener("click", () => {
+    const addTask = () => {
       if (input.value === "") {
-        alert("Empty task");
-      } else {
-        addTaskFunc();
+        alert("Task can't be empty");
+        return;
       }
-    });
+      let div = document.createElement("div");
+      let hr = document.createElement("hr");
+      div.classList.add("task");
+      let taskInnerHTML;
+      div.innerHTML = `${input.value}<i class="cross fa-solid fa-xmark"></i>`;
+      taskInnerHTML = div.innerHTML;
+      taskCon.appendChild(div);
+      taskCon.appendChild(hr);
+      tasksArray.push(input.value);
+      console.log(tasksArray);
+      localStorage.setItem("tasks", JSON.stringify(tasksArray));
+      input.value = "";
+      deleteAtask(taskInnerHTML);
+    };
+
+    const deleteAtask = () => {
+      let crosses = document.querySelectorAll(".cross");
+      crosses.forEach((cross) => {
+        cross.addEventListener("click", () => {
+          let taskContainer = cross.parentNode;
+          let hrElement = taskContainer.nextElementSibling;
+          let taskText = taskContainer.textContent.trim();
+          tasksArray = tasksArray.filter((task) => task !== taskText);
+          localStorage.setItem("tasks", JSON.stringify(tasksArray));
+          taskContainer.remove();
+          if (hrElement && hrElement.tagName === "HR") {
+            hrElement.remove();
+          }
+        });
+      });
+    };
+
+    const renderTask = () => {
+      let items = JSON.parse(localStorage.getItem("tasks"));
+      items.forEach((item) => {
+        let div = document.createElement("div");
+        let hr = document.createElement("hr");
+        div.classList.add("task");
+        let taskInnerHTML;
+        div.innerHTML = `${item}<i class="cross fa-solid fa-xmark"></i>`;
+        taskInnerHTML = div.innerHTML;
+        taskCon.appendChild(div);
+        taskCon.appendChild(hr);
+        deleteAtask(taskInnerHTML);
+      });
+    };
+
+    const deleteAllTasks = () => {
+      localStorage.clear();
+      location.reload();
+    };
 
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
-        if (input.value === "") {
-          alert("Empty task");
-        } else {
-          addTaskFunc();
-        }
+        addTask();
       }
     });
+
+    addBtn.addEventListener("click", addTask);
+    clearBtn.addEventListener("click", deleteAllTasks);
+    window.addEventListener("DOMContentLoaded", renderTask);
   </script>
 </html>
 <style>
@@ -103,6 +121,7 @@
     box-sizing: border-box;
     color: #eeeeee;
     font-family: "Roboto", sans-serif;
+    letter-spacing: 1px;
   }
 
   html,
@@ -118,6 +137,7 @@
   .con {
     padding: 30px;
   }
+
   .titleMain {
     display: flex;
     flex-direction: column;
@@ -135,12 +155,13 @@
     margin: 15px;
     text-transform: capitalize;
   }
+
   .main {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12x;
+    gap: 12px;
   }
 
   .taskCon {
@@ -163,17 +184,34 @@
     margin-top: 20px;
   }
 
-  #input:focus{
+  #input:focus {
+    border: 2px solid white;
     outline: none;
   }
 
-  p {
+  .task {
     width: 100%;
     margin: 10px 0;
     padding: 5px 15px;
+    position: relative;
   }
+
+  .cross {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+
   hr {
     width: 100%;
+  }
+
+  .btns {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
   .btn {
@@ -183,5 +221,12 @@
     padding: 15px;
     text-transform: capitalize;
     margin-top: 20px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .btn:hover {
+    transform: scale(1.1);
+    outline: 2px solid white;
   }
 </style>
